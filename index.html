@@ -46,6 +46,9 @@
 
         <p class="muted" style="margin-top:12px;">Contract</p>
         <div class="mono">0x053c782Bbf191c2B6e792bF829cFF039D55381fC</div>
+        
+        <p class="muted" style="margin-top:12px;">Minted</p>
+        <div id="supply" class="mono">Loading...</div>
       </div>
 
       <div class="card">
@@ -82,8 +85,11 @@
 
       const NATIVE = { name: "MON", symbol: "MON", decimals: 18 };
 
-      // ABI: mint(uint256 qty) payable
-      const ABI = ["function mint(uint256 qty) external payable"];
+      // ABI: mint + read totalSupply
+      const ABI = [
+        "function mint(uint256 qty) external payable",
+        "function totalSupply() view returns (uint256)"
+      ];
 
       const PRICE_PER = ethers.parseEther("33"); // 33 MON
 
@@ -96,6 +102,9 @@
       const walletEl = document.getElementById("wallet");
       const networkEl = document.getElementById("network");
       const statusEl = document.getElementById("status");
+      const supplyEl = document.getElementById("supply");
+      const MAX_SUPPLY = 3333;
+
 
       let provider, signer, contract;
 
@@ -116,6 +125,19 @@
         const q = clampQty();
         const total = BigInt(q) * PRICE_PER;
         totalEl.textContent = `${ethers.formatEther(total)} MON`;
+      }
+
+      async function refreshSupply() {
+        try {
+          // Read-only provider (no wallet needed)
+          const readProvider = new ethers.JsonRpcProvider(RPC_URL);
+          const readContract = new ethers.Contract(CONTRACT, ["function totalSupply() view returns (uint256)"], readProvider);
+
+          const minted = await readContract.totalSupply();
+          supplyEl.textContent = `Minted: ${minted.toString()} / ${MAX_SUPPLY}`;
+        } catch (e) {
+          supplyEl.textContent = "Minted: (unable to fetch right now)";
+        }
       }
 
       async function refreshNetwork() {
@@ -211,6 +233,8 @@
 
       updateTotal();
       setStatus("Ready. Connect MetaMask to mint.");
+      refreshSupply();
+      setInterval(refreshSupply, 10000);
     </script>
   </body>
 </html>
