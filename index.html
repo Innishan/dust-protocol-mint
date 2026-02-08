@@ -68,6 +68,10 @@
         <p class="muted" style="margin-top:12px;">Network</p>
         <div id="network" class="mono">Unknown</div>
 
+        <p class="muted" style="margin-top:12px;">Mint ends in</p>
+        <div id="countdown" class="mono">Loading...</div>
+
+
         <p class="muted" style="margin-top:12px;">Contract</p>
         <div class="mono">0x053c782Bbf191c2B6e792bF829cFF039D55381fC</div>
         
@@ -126,6 +130,11 @@
       const walletEl = document.getElementById("wallet");
       const networkEl = document.getElementById("network");
       const statusEl = document.getElementById("status");
+      const countdownEl = document.getElementById("countdown");
+
+      // Mint end timestamp (UNIX seconds) — update if needed
+      const MINT_ENDS_AT = 1771152832;
+
       const supplyEl = document.getElementById("supply");
       const MAX_SUPPLY = 3333;
 
@@ -255,7 +264,31 @@
         window.ethereum.on("accountsChanged", () => window.location.reload());
       }
 
+      function startCountdown() {
+        function tick() {
+          const now = Math.floor(Date.now() / 1000);
+          let diff = MINT_ENDS_AT - now;
+
+          if (diff <= 0) {
+            countdownEl.textContent = "Mint ended (unminted supply will burn per contract).";
+            return;
+          }
+
+          const d = Math.floor(diff / 86400); diff %= 86400;
+          const h = Math.floor(diff / 3600);  diff %= 3600;
+          const m = Math.floor(diff / 60);
+          const s = diff % 60;
+
+          countdownEl.textContent = `${d}d ${h}h ${m}m ${s}s`;
+        }
+
+        tick();
+        setInterval(tick, 1000);
+      }
+
+
       updateTotal();
+      startCountdown();
       setStatus("Ready. Connect MetaMask to mint.");
       refreshSupply();
       setInterval(refreshSupply, 10000);
