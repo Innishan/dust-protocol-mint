@@ -19,6 +19,22 @@
       .muted { color:#b7b7d6; font-size:14px; }
       .ok { color:#6dff9b; }
       .err { color:#ff6d6d; }
+      .banner {
+        background: linear-gradient(135deg, #1b1b35, #0f172a);
+        border: 1px solid #2b2b55;
+        border-radius: 16px;
+        padding: 16px;
+        margin-bottom: 18px;
+      }
+      .banner h2 {
+        margin: 0 0 6px 0;
+        font-size: 20px;
+      }
+      .banner p {
+        margin: 0;
+        font-size: 14px;
+        color: #c7c7f2;
+      }
     </style>
 
     <!-- Ethers.js v6 -->
@@ -27,6 +43,14 @@
 
   <body>
     <div class="wrap">
+      <div class="banner">
+        <h2>🎁 NFT Utility</h2>
+        <p>
+          NFT holders earn <b>33% of Dust Protocol fees</b>, distributed monthly once
+          Stage 2 dust cleaning goes live. Holding = earning.
+        </p>
+      </div>
+
       <h1>Dust Protocol — Mint</h1>
       <p class="muted">
         Mint price: <b>33 MON</b> per NFT • Network: <b>Monad</b> (Chain ID 143)
