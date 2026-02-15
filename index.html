@@ -73,7 +73,7 @@
 
 
         <p class="muted" style="margin-top:12px;">Contract</p>
-        <div class="mono">0x053c782Bbf191c2B6e792bF829cFF039D55381fC</div>
+        <div class="mono">0x4F651d9b28a635DF44265caF63f00B64a446B773</div>
         
         <p class="muted" style="margin-top:12px;">Minted</p>
         <div id="supply" class="mono">Loading...</div>
@@ -96,7 +96,7 @@
         </div>
 
         <p class="muted" style="margin-top:12px;">
-          Mint window: 7 days. Unminted supply burns after the window (contract logic).
+          Mint window: 30 days. Unminted supply burns after the window (contract logic).
         </p>
 
         <div id="status" class="mono" style="margin-top:10px;"></div>
@@ -105,7 +105,7 @@
 
     <script>
       // ===== CONFIG =====
-      const CONTRACT = "0x053c782Bbf191c2B6e792bF829cFF039D55381fC";
+      const CONTRACT = "0x4F651d9b28a635DF44265caF63f00B64a446B773";
 
       const CHAIN_ID_DEC = 143;
       const CHAIN_ID_HEX = "0x8f"; // 143
@@ -140,6 +140,7 @@
 
 
       let provider, signer, contract;
+      let mintEndMs = null;
 
       function setStatus(msg, cls = "") {
         statusEl.className = "mono " + (cls || "");
@@ -164,9 +165,20 @@
         try {
           // Read-only provider (no wallet needed)
           const readProvider = new ethers.JsonRpcProvider(RPC_URL);
-          const readContract = new ethers.Contract(CONTRACT, ["function totalSupply() view returns (uint256)"], readProvider);
+
+          const readContract = new ethers.Contract(
+            CONTRACT,
+            [
+              "function totalSupply() view returns (uint256)",
+              "function mintEnd() view returns (uint256)"
+            ],
+            readProvider
+          );
 
           const minted = await readContract.totalSupply();
+          const mintEnd = await readContract.mintEnd();
+          mintEndMs = Number(mintEnd) * 1000;
+
           supplyEl.textContent = `Minted: ${minted.toString()} / ${MAX_SUPPLY}`;
         } catch (e) {
           supplyEl.textContent = "Minted: (unable to fetch right now)";
@@ -266,22 +278,28 @@
 
       function startCountdown() {
         function tick() {
-          const now = Math.floor(Date.now() / 1000);
-          let diff = MINT_ENDS_AT - now;
+          // If we haven't fetched mintEnd from chain yet
+          if (!mintEndMs || Number.isNaN(mintEndMs) || mintEndMs <= 0) {
+            countdownEl.textContent = "Loading...";
+            return;
+          }
+
+          const now = Date.now();
+          const diff = mintEndMs - now;
 
           if (diff <= 0) {
             countdownEl.textContent = "Mint ended (unminted supply will burn per contract).";
             return;
           }
 
-          const d = Math.floor(diff / 86400); diff %= 86400;
-          const h = Math.floor(diff / 3600);  diff %= 3600;
-          const m = Math.floor(diff / 60);
-          const s = diff % 60;
+          const totalSeconds = Math.floor(diff / 1000);
+          const d = Math.floor(totalSeconds / 86400);
+          const h = Math.floor((totalSeconds % 86400) / 3600);
+          const m = Math.floor((totalSeconds % 3600) / 60);
+          const s = totalSeconds % 60;
 
           countdownEl.textContent = `${d}d ${h}h ${m}m ${s}s`;
         }
-
         tick();
         setInterval(tick, 1000);
       }
